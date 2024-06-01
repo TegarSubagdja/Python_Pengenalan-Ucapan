@@ -44,6 +44,12 @@ def add_to_favorites(song):
         favorite_data["favorite"].append(song)
         save_json(favorite_file, favorite_data)
 
+def search_song(title, artist):
+    for file in music_files:
+        if title.lower() in file.lower() and artist.lower() in file.lower():
+            return file
+    return None
+
 # Sidebar navigation
 st.sidebar.title(":orange[App]")
 
@@ -64,10 +70,14 @@ st.title(":orange[Music Player]")
 
 # Page content based on selection
 if selected_page == "Home":
-    selected_song = st.sidebar.selectbox("Select a Song", music_files)
+    if 'selected_song' not in st.session_state:
+        st.session_state['selected_song'] = music_files[0] if music_files else None
+
+    selected_song = st.sidebar.selectbox("Select a Song", music_files, index=music_files.index(st.session_state['selected_song']) if st.session_state['selected_song'] in music_files else 0)
 
     # Display the selected song and audio player
     if selected_song:
+        st.session_state['selected_song'] = selected_song
         st.write(f"Currently playing: {selected_song}")
         song_path = os.path.join(music_dir, selected_song)
         audio_player(song_path)
@@ -189,23 +199,37 @@ if st.sidebar.button("Aktifkan Mikrofon"):
         elif "buka halaman pertama" in command:
             st.session_state['selected_page'] = 'Home'
             st.experimental_rerun()
-        elif "buka halaman 2" in command:
+        elif "buka halaman kedua" in command:
             st.session_state['selected_page'] = 'Playlists'
             st.experimental_rerun()
-        elif "buka halaman 3" in command:
+        elif "buka halaman ketiga" in command:
             st.session_state['selected_page'] = 'Favorites'
             st.experimental_rerun()
-        elif "buka halaman 4" in command:
+        elif "buka halaman keempat" in command:
             st.session_state['selected_page'] = 'Recently Played'
             st.experimental_rerun()
+        elif command.startswith("putar"):
+            parts = command.split(" dari ")
+            if len(parts) == 2:
+                title = parts[0].replace("putar ", "").strip()
+                artist = parts[1].strip()
+                song_file = search_song(title, artist)
+                if song_file:
+                    st.write(f"Playing: {song_file}")
+                    st.session_state['playback_state'] = 'playing'
+                    st.session_state['selected_song'] = song_file
+                    st.experimental_rerun()
+                else:
+                    st.write("Lagu tidak ditemukan")
 
 # Handling playback state changes
 if 'playback_state' not in st.session_state:
     st.session_state['playback_state'] = 'stopped'
 
 if st.session_state['playback_state'] == 'playing':
-    if 'selected_song' in locals() and selected_song:
-        song_path = os.path.join(music_dir, selected_song)
+    if 'selected_song' in st.session_state:
+        song_path = os.path.join(music_dir, st.session_state['selected_song'])
+        st.write(f"Currently playing: {st.session_state['selected_song']}")
         audio_player(song_path)
 elif st.session_state['playback_state'] == 'paused':
     st.write("Music paused")
