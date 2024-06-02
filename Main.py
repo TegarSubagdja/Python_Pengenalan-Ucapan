@@ -2,8 +2,12 @@ import streamlit as st
 import os
 import json
 import speech_recognition as sr
+import pygame
 
 st.set_page_config(layout="wide")
+
+# Inisialisasi mixer pygame
+pygame.mixer.init()
 
 # Custom CSS
 with open("css/styles.css") as f:
@@ -34,10 +38,18 @@ recent_data = load_json(recent_file)
 playlist_data = load_json(playlist_file)
 favorite_data = load_json(favorite_file)
 
-def audio_player(file_path):
-    audio_file = open(file_path, 'rb')
-    audio_bytes = audio_file.read()
-    st.audio(audio_bytes, format='audio/mp3')
+def play_audio(file_path):
+    pygame.mixer.music.load(file_path)
+    pygame.mixer.music.play()
+
+def pause_audio():
+    pygame.mixer.music.pause()
+
+def resume_audio():
+    pygame.mixer.music.unpause()
+
+def stop_audio():
+    pygame.mixer.music.stop()
 
 def add_to_favorites(song):
     if song not in favorite_data["favorite"]:
@@ -50,29 +62,33 @@ def search_song(title, artist):
             return file
     return None
 
+# Inisialisasi session state
+if 'selected_page' not in st.session_state:
+    st.session_state['selected_page'] = "Home"
+if 'playback_state' not in st.session_state:
+    st.session_state['playback_state'] = 'stopped'
+if 'selected_song' not in st.session_state:
+    st.session_state['selected_song'] = music_files[0] if music_files else None
+if 'audio_position' not in st.session_state:
+    st.session_state['audio_position'] = 0
+
 # Sidebar navigation
 st.sidebar.title(":orange[App]")
 
 pages = ["Home", "Playlists", "Favorites", "Recently Played"]
-if 'selected_page' not in st.session_state:
-    st.session_state['selected_page'] = "Home"
-
 selected_page = st.sidebar.radio("Navigate", pages, index=pages.index(st.session_state['selected_page']))
 
 st.sidebar.caption("KEL - 3")
-# st.sidebar.caption("152021144 - Yuren Prisilla")
-# st.sidebar.caption("152021159 - Ayala Qaulam Putri")
-# st.sidebar.caption("152021169 - Tegar Subagdja")
-# st.sidebar.caption("152021175 - Nirmala Putri Ismail")
-# st.sidebar.caption("152020030 - Andi Muchlad Ramadani")
+st.sidebar.caption("152021144 - Yuren Prisilla")
+st.sidebar.caption("152021159 - Ayala Qaulam Putri")
+st.sidebar.caption("152021169 - Tegar Subagdja")
+st.sidebar.caption("152021175 - Nirmala Putri Ismail")
+st.sidebar.caption("152020030 - Andi Muchlad Ramadani")
 
 st.title(":orange[Music Player]")
 
 # Page content based on selection
 if selected_page == "Home":
-    if 'selected_song' not in st.session_state:
-        st.session_state['selected_song'] = music_files[0] if music_files else None
-
     selected_song = st.sidebar.selectbox("Select a Song", music_files, index=music_files.index(st.session_state['selected_song']) if st.session_state['selected_song'] in music_files else 0)
 
     # Display the selected song and audio player
@@ -80,7 +96,16 @@ if selected_page == "Home":
         st.session_state['selected_song'] = selected_song
         st.write(f"Currently playing: {selected_song}")
         song_path = os.path.join(music_dir, selected_song)
-        audio_player(song_path)
+
+        if st.session_state['playback_state'] == 'playing':
+            if not pygame.mixer.music.get_busy():
+                play_audio(song_path)
+                pygame.mixer.music.set_pos(st.session_state['audio_position'])
+        elif st.session_state['playback_state'] == 'paused':
+            if not pygame.mixer.music.get_busy():
+                play_audio(song_path)
+                pygame.mixer.music.set_pos(st.session_state['audio_position'])
+                pause_audio()
 
         # Update recent songs
         if selected_song not in recent_data["recent"]:
@@ -135,8 +160,22 @@ elif selected_page == "Playlists":
                 with col1:
                     st.image("https://via.placeholder.com/150", use_column_width=True)  # Replace with actual album art URL if available
                 with col2:
-                    audio_player(os.path.join(music_dir, song))
-                    if st.button("⭐ Add to Favorites", key=song):
+                    st.write(f"Playing: {song}")
+                    song_path = os.path.join(music_dir, song)
+                    if st.button("Play", key=song):
+                        play_audio(song_path)
+                        st.session_state['selected_song'] = song
+                        st.session_state['playback_state'] = 'playing'
+                    if st.button("Pause", key=song + "_pause"):
+                        pause_audio()
+                        st.session_state['playback_state'] = 'paused'
+                    if st.button("Resume", key=song + "_resume"):
+                        resume_audio()
+                        st.session_state['playback_state'] = 'playing'
+                    if st.button("Stop", key=song + "_stop"):
+                        stop_audio()
+                        st.session_state['playback_state'] = 'stopped'
+                    if st.button("⭐ Add to Favorites", key=song + "_fav"):
                         add_to_favorites(song)
                         st.success(f"{song} added to favorites!")
 
@@ -150,8 +189,21 @@ elif selected_page == "Favorites":
                 with col1:
                     st.image("https://via.placeholder.com/150", use_column_width=True)  # Replace with actual album art URL if available
                 with col2:
-                    audio_player(os.path.join(music_dir, song))
-                    # No need to add to favorites button here
+                    st.write(f"Playing: {song}")
+                    song_path = os.path.join(music_dir, song)
+                    if st.button("Play", key=song):
+                        play_audio(song_path)
+                        st.session_state['selected_song'] = song
+                        st.session_state['playback_state'] = 'playing'
+                    if st.button("Pause", key=song + "_pause"):
+                        pause_audio()
+                        st.session_state['playback_state'] = 'paused'
+                    if st.button("Resume", key=song + "_resume"):
+                        resume_audio()
+                        st.session_state['playback_state'] = 'playing'
+                    if st.button("Stop", key=song + "_stop"):
+                        stop_audio()
+                        st.session_state['playback_state'] = 'stopped'
 
 elif selected_page == "Recently Played":
     st.write("# Recently Played")
@@ -163,8 +215,22 @@ elif selected_page == "Recently Played":
                 with col1:
                     st.image("https://via.placeholder.com/150", use_column_width=True)  # Replace with actual album art URL if available
                 with col2:
-                    audio_player(os.path.join(music_dir, song))
-                    if st.button("⭐ Add to Favorites", key=song):
+                    st.write(f"Playing: {song}")
+                    song_path = os.path.join(music_dir, song)
+                    if st.button("Play", key=song):
+                        play_audio(song_path)
+                        st.session_state['selected_song'] = song
+                        st.session_state['playback_state'] = 'playing'
+                    if st.button("Pause", key=song + "_pause"):
+                        pause_audio()
+                        st.session_state['playback_state'] = 'paused'
+                    if st.button("Resume", key=song + "_resume"):
+                        resume_audio()
+                        st.session_state['playback_state'] = 'playing'
+                    if st.button("Stop", key=song + "_stop"):
+                        stop_audio()
+                        st.session_state['playback_state'] = 'stopped'
+                    if st.button("⭐ Add to Favorites", key=song + "_fav"):
                         add_to_favorites(song)
                         st.success(f"{song} added to favorites!")
 
@@ -186,16 +252,22 @@ def recognize_speech():
 
 # Button to activate microphone and recognize speech
 if st.sidebar.button("Aktifkan Mikrofon"):
+    # Hanya menangkap perintah tanpa mempengaruhi pemutaran musik
     command = recognize_speech()
     if command:
+        # Menunda pemrosesan perintah sampai setelah pengaktifan mikrofon
         if "mainkan" in command:
             st.session_state['playback_state'] = 'playing'
+            play_audio(os.path.join(music_dir, st.session_state['selected_song']))
         elif "jeda" in command:
             st.session_state['playback_state'] = 'paused'
+            pause_audio()
         elif "berhenti" in command:
             st.session_state['playback_state'] = 'stopped'
+            stop_audio()
         elif "lanjutkan" in command:
             st.session_state['playback_state'] = 'playing'
+            resume_audio()
         elif "buka halaman pertama" in command:
             st.session_state['selected_page'] = 'Home'
             st.experimental_rerun()
@@ -218,19 +290,15 @@ if st.sidebar.button("Aktifkan Mikrofon"):
                     st.write(f"Playing: {song_file}")
                     st.session_state['playback_state'] = 'playing'
                     st.session_state['selected_song'] = song_file
+                    play_audio(os.path.join(music_dir, song_file))
                     st.experimental_rerun()
                 else:
                     st.write("Lagu tidak ditemukan")
 
 # Handling playback state changes
-if 'playback_state' not in st.session_state:
-    st.session_state['playback_state'] = 'stopped'
-
 if st.session_state['playback_state'] == 'playing':
     if 'selected_song' in st.session_state:
-        song_path = os.path.join(music_dir, st.session_state['selected_song'])
         st.write(f"Currently playing: {st.session_state['selected_song']}")
-        audio_player(song_path)
 elif st.session_state['playback_state'] == 'paused':
     st.write("Music paused")
 elif st.session_state['playback_state'] == 'stopped':
