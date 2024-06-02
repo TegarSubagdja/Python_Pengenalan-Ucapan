@@ -38,18 +38,20 @@ recent_data = load_json(recent_file)
 playlist_data = load_json(playlist_file)
 favorite_data = load_json(favorite_file)
 
-def play_audio(file_path):
+def play_audio(file_path, position=0):
     pygame.mixer.music.load(file_path)
-    pygame.mixer.music.play()
+    pygame.mixer.music.play(start=position)
 
 def pause_audio():
+    st.session_state['audio_position'] = pygame.mixer.music.get_pos() / 1000
     pygame.mixer.music.pause()
 
 def resume_audio():
-    pygame.mixer.music.unpause()
+    play_audio(os.path.join(music_dir, st.session_state['selected_song']), st.session_state['audio_position'])
 
 def stop_audio():
     pygame.mixer.music.stop()
+    st.session_state['audio_position'] = 0
 
 def add_to_favorites(song):
     if song not in favorite_data["favorite"]:
@@ -99,13 +101,11 @@ if selected_page == "Home":
 
         if st.session_state['playback_state'] == 'playing':
             if not pygame.mixer.music.get_busy():
-                play_audio(song_path)
-                pygame.mixer.music.set_pos(st.session_state['audio_position'])
+                play_audio(song_path, st.session_state['audio_position'])
         elif st.session_state['playback_state'] == 'paused':
             if not pygame.mixer.music.get_busy():
-                play_audio(song_path)
-                pygame.mixer.music.set_pos(st.session_state['audio_position'])
-                pause_audio()
+                play_audio(song_path, st.session_state['audio_position'])
+                pygame.mixer.music.pause()
 
         # Update recent songs
         if selected_song not in recent_data["recent"]:
@@ -258,7 +258,7 @@ if st.sidebar.button("Aktifkan Mikrofon"):
         # Menunda pemrosesan perintah sampai setelah pengaktifan mikrofon
         if "mainkan" in command:
             st.session_state['playback_state'] = 'playing'
-            play_audio(os.path.join(music_dir, st.session_state['selected_song']))
+            play_audio(os.path.join(music_dir, st.session_state['selected_song']), st.session_state['audio_position'])
         elif "jeda" in command:
             st.session_state['playback_state'] = 'paused'
             pause_audio()
@@ -290,6 +290,7 @@ if st.sidebar.button("Aktifkan Mikrofon"):
                     st.write(f"Playing: {song_file}")
                     st.session_state['playback_state'] = 'playing'
                     st.session_state['selected_song'] = song_file
+                    st.session_state['audio_position'] = 0
                     play_audio(os.path.join(music_dir, song_file))
                     st.experimental_rerun()
                 else:
