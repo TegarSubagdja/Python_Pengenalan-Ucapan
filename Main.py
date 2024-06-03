@@ -163,14 +163,14 @@ if selected_page == "Home":
         st.write("New Track")
 
 elif selected_page == "Playlists":
-    st.write("# Playlists")
+    st.write("## Playlists")
     if "playlist" in playlist_data:
         for song in playlist_data["playlist"]:
             with st.container():
                 st.write(f"### {song}")
                 col1, col2 = st.columns([1, 3])
                 with col1:
-                    st.image("https://via.placeholder.com/150", use_column_width=True)  # Replace with actual album art URL if available
+                    st.image("https://cdns-images.dzcdn.net/images/cover/ff8c91521ca4aa9ffb63b9a212bc7a6d/264x264.jpg", use_column_width=True)  # Replace with actual album art URL if available
                 with col2:
                     st.write(f"Playing: {song}")
                     song_path = os.path.join(music_dir, song)
@@ -192,14 +192,14 @@ elif selected_page == "Playlists":
                         st.success(f"{song} added to favorites!")
 
 elif selected_page == "Favorites":
-    st.write("# Favorites")
+    st.write("## Favorites")
     if "favorite" in favorite_data:
         for song in favorite_data["favorite"]:
             with st.container():
                 st.write(f"### {song}")
                 col1, col2 = st.columns([1, 3])
                 with col1:
-                    st.image("https://via.placeholder.com/150", use_column_width=True)  # Replace with actual album art URL if available
+                    st.image("https://cdns-images.dzcdn.net/images/cover/ff8c91521ca4aa9ffb63b9a212bc7a6d/264x264.jpg", use_column_width=True)  # Replace with actual album art URL if available
                 with col2:
                     st.write(f"Playing: {song}")
                     song_path = os.path.join(music_dir, song)
@@ -218,14 +218,14 @@ elif selected_page == "Favorites":
                         st.session_state['playback_state'] = 'stopped'
 
 elif selected_page == "Recently Played":
-    st.write("# Recently Played")
+    st.write("## Recently Played")
     if "recent" in recent_data:
         for song in recent_data["recent"]:
             with st.container():
                 st.write(f"### {song}")
                 col1, col2 = st.columns([1, 3])
                 with col1:
-                    st.image("https://via.placeholder.com/150", use_column_width=True)  # Replace with actual album art URL if available
+                    st.image("https://cdns-images.dzcdn.net/images/cover/ff8c91521ca4aa9ffb63b9a212bc7a6d/264x264.jpg", use_column_width=True)  # Replace with actual album art URL if available
                 with col2:
                     st.write(f"Playing: {song}")
                     song_path = os.path.join(music_dir, song)
@@ -247,7 +247,7 @@ elif selected_page == "Recently Played":
                         st.success(f"{song} added to favorites!")
 
 if selected_page == "Creators":
-    st.write("# Creator")
+    st.write("## Creators")
     creators = [
         {"name": "Yuren Prisilla", "nim": "15-2021-144", "kelas": "AA", "photo": "photos/Yuren.jpeg"},
         {"name": "Ayala Qaulam Putri", "nim": "15-2021-159", "kelas": "AA", "photo": "photos/Ayala.jpg"},
