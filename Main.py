@@ -3,6 +3,9 @@ import os
 import json
 import speech_recognition as sr
 import pygame
+from gtts import gTTS
+import sounddevice as sd
+import numpy as np
 
 st.set_page_config(layout="wide")
 
@@ -64,6 +67,20 @@ def search_song(title, artist):
             return file
     return None
 
+def play_identity(text):
+    language = 'id'
+    tts = gTTS(text=text, lang=language, slow=False)
+    tts.save("temp.mp3")
+    pygame.mixer.music.load("temp.mp3")
+    pygame.mixer.music.play()
+    while pygame.mixer.music.get_busy():
+        pygame.time.Clock().tick(10)
+    pygame.mixer.music.stop()  # Stop the music
+    pygame.mixer.quit()  # Close the mixer
+    os.remove("temp.mp3")
+
+os.makedirs('temp', exist_ok=True)
+
 # Inisialisasi session state
 if 'selected_page' not in st.session_state:
     st.session_state['selected_page'] = "Home"
@@ -77,15 +94,10 @@ if 'audio_position' not in st.session_state:
 # Sidebar navigation
 st.sidebar.title(":orange[App]")
 
-pages = ["Home", "Playlists", "Favorites", "Recently Played"]
+pages = ["Home", "Playlists", "Favorites", "Recently Played", "Creators"]
 selected_page = st.sidebar.radio("Navigate", pages, index=pages.index(st.session_state['selected_page']))
 
 st.sidebar.caption("KEL - 3")
-st.sidebar.caption("152021144 - Yuren Prisilla")
-st.sidebar.caption("152021159 - Ayala Qaulam Putri")
-st.sidebar.caption("152021169 - Tegar Subagdja")
-st.sidebar.caption("152021175 - Nirmala Putri Ismail")
-st.sidebar.caption("152020030 - Andi Muchlad Ramadani")
 
 st.title(":orange[Music Player]")
 
@@ -234,6 +246,29 @@ elif selected_page == "Recently Played":
                         add_to_favorites(song)
                         st.success(f"{song} added to favorites!")
 
+if selected_page == "Creators":
+    st.write("# Creator")
+    creators = [
+        {"name": "Yuren Prisilla", "nim": "15-2021-144", "kelas": "AA", "photo": "photos/Yuren.jpeg"},
+        {"name": "Ayala Qaulam Putri", "nim": "15-2021-159", "kelas": "AA", "photo": "photos/Ayala.jpg"},
+        {"name": "Tegar Subagdja", "nim": "15-2021-169", "kelas": "AA", "photo": "photos/Tegar.jpg"},
+        {"name": "Nirmala Putri Ismail", "nim": "15-2021-175", "kelas": "AA", "photo": "photos/Nirmala.JPG"},
+        # {"name": "Andi Muchlad Ramadani", "nim": "152020030", "kelas": "AA", "photo": "photos/Andi.HEIC"}
+    ]
+
+    for creator in creators:
+        with st.container():
+            col1, col2 = st.columns([1, 3])
+            with col1:
+                st.image(creator["photo"], width=150)
+            with col2:
+                st.write(f"### {creator['name']}")
+                st.write(f"NIM: {creator['nim']}")
+                st.write(f"Kelas: {creator['kelas']}")
+                if st.button("Play Identity", key=creator["nim"]):
+                    text = f"Nama saya {creator['name']}, dengan NIM {creator['nim']}, dari kelas {creator['kelas']}."
+                    play_identity(text)
+
 def recognize_speech():
     recognizer = sr.Recognizer()
     with sr.Microphone() as source:
@@ -268,17 +303,20 @@ if st.sidebar.button("Aktifkan Mikrofon"):
         elif "lanjutkan" in command:
             st.session_state['playback_state'] = 'playing'
             resume_audio()
-        elif "buka halaman pertama" in command:
+        elif "buka halaman home" in command:
             st.session_state['selected_page'] = 'Home'
             st.experimental_rerun()
-        elif "buka halaman kedua" in command:
+        elif "buka halaman playlist" in command:
             st.session_state['selected_page'] = 'Playlists'
             st.experimental_rerun()
-        elif "buka halaman ketiga" in command:
+        elif "buka halaman favorit" in command:
             st.session_state['selected_page'] = 'Favorites'
             st.experimental_rerun()
-        elif "buka halaman keempat" in command:
+        elif "buka halaman recently" in command:
             st.session_state['selected_page'] = 'Recently Played'
+            st.experimental_rerun()
+        elif "buka halaman creator" in command:
+            st.session_state['selected_page'] = 'Creators'
             st.experimental_rerun()
         elif command.startswith("putar"):
             parts = command.split(" dari ")
